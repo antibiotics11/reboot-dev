@@ -59,7 +59,7 @@ function router(string $key, ?string $value, app_config $config): bool {
         COMMAND_ADD    => note_add($value, $config),
         COMMAND_LIST   => note_list($config),
         COMMAND_CLEAR  => note_clear($config),
-        COMMAND_SEARCH => note_search($config),
+        COMMAND_SEARCH => note_search($value, $config),
         COMMAND_HELP   => note_help($config),
         default        => note_error($config)
     };
@@ -258,9 +258,30 @@ function note_clear(app_config $config): bool {
     return _note_remove($config->note_file_path) && _note_create($config->note_file_path);
 }
 
-function note_search(app_config $config): bool {
+function note_search(string $keyword, app_config $config): bool {
+    $note_content = _note_read($config->note_file_path);
+    if ($note_content === null) {
+        return false;
+    }
 
+    $note_output = "";
+    $match_count = 0;
+    foreach ($note_content as $timestamp => $line) {
+        if (str_contains($line, $keyword)) {
+            $note_output = sprintf("%s\r\n%s => %s",
+                $note_output,
+                $timestamp,
+                $line
+            );
+            $match_count++;
+        }
+    }
+    $note_output = sprintf("Found %d matches.\r\n%s\r\n",
+        $match_count,
+        $note_output
+    );
 
+    _note_output($config->output_path, $note_output, true);
     return true;
 }
 
