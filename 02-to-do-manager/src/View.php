@@ -36,7 +36,7 @@ TASK;
         $task->id,
         $task->task,
         date(DATE_RFC3339, $task->createdAt),
-        $task->status
+        $task->status === 0 ? "Pending" : "Done"
       );
     }
 
