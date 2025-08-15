@@ -3,6 +3,7 @@
 namespace RebootDev\ToDoManager;
 use function set_exception_handler;
 use function getenv;
+use const DIRECTORY_SEPARATOR;
 
 final class App {
   public function __construct(
@@ -14,7 +15,7 @@ final class App {
   ) {
     $this->argvParser ??= new ArgvParser();
     if ($this->controller === null) {
-      $this->dataPath ??= getenv("HOME");
+      $this->dataPath ??= getenv("HOME") . DIRECTORY_SEPARATOR . ".todo.json";
       $this->controller = new Controller(
         new Model(new FileManager($this->dataPath)),
         new View()
