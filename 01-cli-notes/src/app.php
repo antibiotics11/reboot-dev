@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-declare(ticks = 1, strict_types = 1);
+declare(strict_types = 1);
 cli_set_process_title("cli-notes");
 
 const COMMAND_ADD    = "add";
@@ -24,6 +24,11 @@ final readonly class app_config {
     ) {}
 }
 
+/**
+ * @param int      $argc
+ * @param string[] $argv
+ * @return int
+ */
 function main(int $argc, array $argv): int {
     $parsed_argv = parse_argv($argc, $argv);
 
@@ -285,14 +290,14 @@ function note_search(string $keyword, app_config $config): bool {
     return true;
 }
 
-function note_help(app_config $config): bool {
+function note_help(app_config $config): true {
     _note_output($config->output_path, HELP, true);
     return true;
 }
 
-function note_error(app_config $config): bool {
+function note_error(app_config $config): false {
     _note_output($config->output_path, "Undefined command.\r\n", true);
-    return true;
+    return false;
 }
 
 exit(main($_SERVER["argc"], $_SERVER["argv"]));
