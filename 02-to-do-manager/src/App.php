@@ -40,8 +40,8 @@ final class App {
     match ($command) {
       Command::ADD  => $this->controller->add($value),
       Command::LIST => $this->controller->list(),
-      Command::DONE => $this->controller->done($value),
-      Command::RMOV => $this->controller->remove($value),
+      Command::DONE => $this->controller->done((int)$value),
+      Command::RMOV => $this->controller->remove((int)$value),
       Command::CLER => $this->controller->clear(),
       Command::HELP => $this->controller->help()
     };
