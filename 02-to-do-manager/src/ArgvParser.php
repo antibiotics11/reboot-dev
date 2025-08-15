@@ -22,7 +22,7 @@ readonly class ArgvParser {
 
       $parsedArgv[] = [
         "command" => $command,
-        "value"   => $command->mustHaveValue() ? $argv[++$i] : null
+        "value"   => $command->mustHaveValue() ? ($argv[++$i] ?? "") : null
       ];
     }
 
