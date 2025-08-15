@@ -7,7 +7,7 @@ use function strlen;
 use function count, end;
 use function time;
 
-class Model {
+readonly class Model {
 
   /**
    * @return Task[]
@@ -54,6 +54,16 @@ class Model {
     $this->fileManager->close();
   }
 
+  private function getTaskById(int $id): ?Task {
+    $taskList = $this->readAllTasks();
+    foreach ($taskList as $task) {
+      if ($task->id === $id) {
+        return $task;
+      }
+    }
+    return null;
+  }
+
   public function __construct(
     private FileManager $fileManager
   ) {}
@@ -75,6 +85,10 @@ class Model {
   }
 
   public function done(int $id): void {
+    if ($this->getTaskById($id) === null) {
+      throw new InvalidArgumentException("Task ID \"" . $id . "\" does not exist.");
+    }
+
     $taskList = $this->readAllTasks();
     foreach ($taskList as $task) {
       if ($task->id === $id) {
@@ -87,6 +101,10 @@ class Model {
   }
 
   public function remove(int $id): void {
+    if ($this->getTaskById($id) === null) {
+      throw new InvalidArgumentException("Task ID \"" . $id . "\" does not exist.");
+    }
+
     $taskList = $this->readAllTasks();
     foreach ($taskList as $arrayKey => $task) {
       if ($task->id === $id) {
