@@ -1,0 +1,7 @@
+#!/usr/bin/php8.3
+<?php
+
+require_once(__DIR__ . DIRECTORY_SEPARATOR . "src/Autoloader.php");
+RebootDev\ToDoManager\Autoloader::register();
+
+(new RebootDev\ToDoManager\App($_SERVER["argc"], $_SERVER["argv"]))->run();
