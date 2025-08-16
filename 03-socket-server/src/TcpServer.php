@@ -76,6 +76,7 @@ class TcpServer {
             if (strlen($receivedData) === 0) {
               $client->close();
               unset($this->clientSockets[$key]);
+              Continue;
             }
 
             $options = [
@@ -86,18 +87,17 @@ class TcpServer {
               $result = $onDataReceived($receivedData, $clientName, $options, $this);
               $this->sendDataToClient($result, $client);
 
+              if ($options["broadcast"]) {
+                foreach ($this->clientSockets as $peer) {
+                  if ($peer !== $client && !$peer->isClosed()) {
+                    $this->sendDataToClient($result, $peer);
+                  }
+                }
+              }
+
               if (!$options["keep-alive"]) {
                 $client->close();
                 unset($this->clientSockets[$key]);
-                continue;
-              }
-
-              $writeTargets = $options["broadcast"] ? $this->clientSockets : [ $client ];
-              foreach ($writeTargets as $writeSocket) {
-                if ($writeSocket === $client || $writeSocket->isClosed()) {
-                  continue;
-                }
-                $this->sendDataToClient($result, $writeSocket);
               }
             }
           }
@@ -112,7 +112,7 @@ class TcpServer {
     foreach ($this->clientSockets as $clientSocket) {
       $clientSocket->close();
     }
-    $this->serverSocket->close();
+    $this->serverSocket?->close();
     $this->reset();
   }
 
