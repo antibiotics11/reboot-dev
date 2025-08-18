@@ -36,7 +36,7 @@ class File {
    */
   public function getContent(int $chunkSize = 8192): Generator {
     if ($chunkSize < 1) {
-      throw new InvalidArgumentException("Chunk size must be larger than 1.")
+      throw new InvalidArgumentException("Chunk size must be larger than 1.");
     }
 
     $fd = fopen($this->realpath, "rb");
