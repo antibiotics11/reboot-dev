@@ -1,55 +1,69 @@
 <?php
 
 namespace RebootDev\FileServer\Resource;
-use InvalidArgumentException, RuntimeException;
-use function strlen;
+use Generator;
+use InvalidArgumentException, RuntimeException, Throwable;
 use function realpath;
 use function is_file, is_readable;
-use function file_get_contents;
 use function pathinfo;
 use const PATHINFO_BASENAME, PATHINFO_EXTENSION;
 
 class File {
-  protected(set) string $name;
-  protected(set) int    $size;
-
   public function __construct(
-    public string $path {
-      set (string $path) {
-        $this->path = $path;
-        $this->name = pathinfo($path, PATHINFO_BASENAME);
-      }
-    },
-    public string $content  = "" {
-      set (string $content) {
-        $this->content = $content;
-        $this->size    = strlen($content);
-      }
-    },
-    public MimeType $mimeType = MimeType::TEXT_PLAIN
+    protected(set) string   $realpath,
+    protected(set) string   $basename,
+    protected(set) int      $size,
+    protected(set) MimeType $mimeType = MimeType::TEXT_PLAIN
   ) {}
 
   public static function fromPath(string $path): self {
-    $absolutePath = realpath($path);
-    if ($absolutePath === false) {
-      throw new InvalidArgumentException("Failed to get absolute path.");
-    }
-    if (!is_file($absolutePath)) {
-      throw new InvalidArgumentException("Input path is not a file.");
-    }
-    if (!is_readable($absolutePath)) {
-      throw new InvalidArgumentException("File is not readable.");
+    $realpath = realpath($path);
+    if ($realpath === false || !is_file($realpath) || !is_readable($realpath)) {
+      throw new InvalidArgumentException("Unreadable file.");
     }
 
-    $content = file_get_contents($absolutePath);
-    if ($content === false) {
-      throw new RuntimeException("Failed to read file content");
+    $basename  = pathinfo($realpath, PATHINFO_BASENAME);
+    $extension = pathinfo($realpath, PATHINFO_EXTENSION);
+    $mimeType  = MimeType::fromExtension($extension);
+    $size      = filesize($realpath);
+
+    return new self($realpath, $basename, $size, $mimeType);
+  }
+
+  /**
+   * @param int $chunkSize
+   * @return Generator<string>
+   */
+  public function getContent(int $chunkSize = 8192): Generator {
+    if ($chunkSize < 1) {
+      throw new InvalidArgumentException("Chunk size must be larger than 1.")
     }
 
-    $extension = MimeType::fromExtension(
-      pathinfo($absolutePath, PATHINFO_EXTENSION)
-    );
+    $fd = fopen($this->realpath, "rb");
+    if ($fd === false) {
+      throw new RuntimeException("Failed to open file.");
+    }
+    if (!flock($fd, LOCK_SH)) {
+      fclose($fd);
+      throw new RuntimeException("Failed to lock file.");
+    }
 
-    return new self($absolutePath, $content, $extension);
+    try {
+      rewind($fd);
+      while (!feof($fd)) {
+        $chunk = fread($fd, $chunkSize);
+        if ($chunk === false) {
+          throw new RuntimeException("Failed to read file.");
+        }
+        if ($chunk !== "") {
+          yield $chunk;
+        }
+      }
+    } finally {
+      if (is_resource($fd)) {
+        @flock($fd, LOCK_UN);
+        fclose($fd);
+      }
+    }
   }
 }
