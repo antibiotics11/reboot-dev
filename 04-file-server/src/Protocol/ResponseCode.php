@@ -10,11 +10,11 @@ enum ResponseCode: int {
   case NOT_FOUND   = 404;
   case INTERNAL    = 500;
 
-  public function toString(): string {
+  public function reason(): string {
     return match ($this) {
       self::OK          => "OK",
       self::NO_CONTENT  => "No Content",
-      self::BAD_REQUEST => "Bad Request",
+      self::BAD_REQUEST => "Bad RequestHeader",
       self::FORBIDDEN   => "Forbidden",
       self::NOT_FOUND   => "Not Found",
       self::INTERNAL    => "Internal Server Error"
